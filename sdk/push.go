@@ -6,18 +6,15 @@ import (
 	"strings"
 )
 
-// ExponentPushToken is a valid Expo push token
-type ExponentPushToken string
-
 // ErrMalformedToken is returned if a token does not start with 'ExponentPushToken'
 var ErrMalformedToken = errors.New("Token should start with ExponentPushToken")
 
-//NewExponentPushToken returns a token and may return an error if the input token is invalid
-func NewExponentPushToken(token string) (ExponentPushToken, error) {
+// NewExponentPushToken returns a token and may return an error if the input token is invalid
+func NewExponentPushToken(token string) (string, error) {
 	if !strings.HasPrefix(token, "ExponentPushToken") {
 		return "", ErrMalformedToken
 	}
-	return ExponentPushToken(token), nil
+	return token, nil
 }
 
 const (
@@ -31,37 +28,38 @@ const (
 
 // PushMessage is an object that describes a push notification request.
 // Fields:
-//	To: an ExponentPushToken
-//	Data: A dict of extra data to pass inside of the push notification.
-//	      The total notification payload must be at most 4096 bytes.
-//	Title: The title to display in the notification. On iOS, this is
-//	       displayed only on Apple Watch.
-//	Body: The message to display in the notification.
-//	Sound: A sound to play when the recipient receives this
-//	       notification. Specify "default" to play the device's default
-//	       notification sound, or omit this field to play no sound.
-//	TTLSeconds: The number of seconds for which the message may be kept around
-//	     for redelivery if it hasn't been delivered yet. Defaults to 0.
-//	Expiration: UNIX timestamp for when this message expires. It has
-//	        the same effect as ttl, and is just an absolute timestamp
-//	        instead of a relative one.
-//	Priority: Delivery priority of the message. Use the *Priority constants
-//          specified above.
-//	Badge: An integer representing the unread notification count. This
-//	       currently only affects iOS. Specify 0 to clear the badge count.
-//	ChannelID: ID of the Notification Channel through which to display this
-//         notification on Android devices.
+//
+//		To: an ExponentPushToken
+//		Data: A dict of extra data to pass inside of the push notification.
+//		      The total notification payload must be at most 4096 bytes.
+//		Title: The title to display in the notification. On iOS, this is
+//		       displayed only on Apple Watch.
+//		Body: The message to display in the notification.
+//		Sound: A sound to play when the recipient receives this
+//		       notification. Specify "default" to play the device's default
+//		       notification sound, or omit this field to play no sound.
+//		TTLSeconds: The number of seconds for which the message may be kept around
+//		     for redelivery if it hasn't been delivered yet. Defaults to 0.
+//		Expiration: UNIX timestamp for when this message expires. It has
+//		        the same effect as ttl, and is just an absolute timestamp
+//		        instead of a relative one.
+//		Priority: Delivery priority of the message. Use the *Priority constants
+//	         specified above.
+//		Badge: An integer representing the unread notification count. This
+//		       currently only affects iOS. Specify 0 to clear the badge count.
+//		ChannelID: ID of the Notification Channel through which to display this
+//	        notification on Android devices.
 type PushMessage struct {
-	To         []ExponentPushToken `json:"to"`
-	Body       string              `json:"body"`
-	Data       map[string]string   `json:"data,omitempty"`
-	Sound      string              `json:"sound,omitempty"`
-	Title      string              `json:"title,omitempty"`
-	TTLSeconds int                 `json:"ttl,omitempty"`
-	Expiration int64               `json:"expiration,omitempty"`
-	Priority   string              `json:"priority,omitempty"`
-	Badge      int                 `json:"badge,omitempty"`
-	ChannelID  string              `json:"channelId,omitempty"`
+	To         []string          `json:"to"`
+	Body       string            `json:"body"`
+	Data       map[string]string `json:"data,omitempty"`
+	Sound      string            `json:"sound,omitempty"`
+	Title      string            `json:"title,omitempty"`
+	TTLSeconds int               `json:"ttl,omitempty"`
+	Expiration int64             `json:"expiration,omitempty"`
+	Priority   string            `json:"priority,omitempty"`
+	Badge      int               `json:"badge,omitempty"`
+	ChannelID  string            `json:"channelId,omitempty"`
 }
 
 // Response is the HTTP response returned from an Expo publish HTTP request
@@ -84,10 +82,13 @@ const ErrorMessageRateExceeded = "MessageRateExceeded"
 
 // PushResponse is a wrapper class for a push notification response.
 // A successful single push notification:
-//     {'status': 'ok'}
+//
+//	{'status': 'ok'}
+//
 // An invalid push token
-//     {'status': 'error',
-//      'message': '"adsf" is not a registered push notification recipient'}
+//
+//	{'status': 'error',
+//	 'message': '"adsf" is not a registered push notification recipient'}
 type PushResponse struct {
 	PushMessage PushMessage
 	ID          string                 `json:"id"`
@@ -165,9 +166,11 @@ type MessageRateExceededError struct {
 // style of error. Instead of a "data" array containing errors per
 // notification, an "error" array is returned.
 // {"errors": [
-//   {"code": "API_ERROR",
-//    "message": "child \"to\" fails because [\"to\" must be a string]. \"value\" must be an array."
-//   }
+//
+//	{"code": "API_ERROR",
+//	 "message": "child \"to\" fails because [\"to\" must be a string]. \"value\" must be an array."
+//	}
+//
 // ]}
 type PushServerError struct {
 	Message      string
