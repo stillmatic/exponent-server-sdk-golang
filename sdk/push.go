@@ -27,39 +27,20 @@ const (
 )
 
 // PushMessage is an object that describes a push notification request.
-// Fields:
-//
-//		To: an ExponentPushToken
-//		Data: A dict of extra data to pass inside of the push notification.
-//		      The total notification payload must be at most 4096 bytes.
-//		Title: The title to display in the notification. On iOS, this is
-//		       displayed only on Apple Watch.
-//		Body: The message to display in the notification.
-//		Sound: A sound to play when the recipient receives this
-//		       notification. Specify "default" to play the device's default
-//		       notification sound, or omit this field to play no sound.
-//		TTLSeconds: The number of seconds for which the message may be kept around
-//		     for redelivery if it hasn't been delivered yet. Defaults to 0.
-//		Expiration: UNIX timestamp for when this message expires. It has
-//		        the same effect as ttl, and is just an absolute timestamp
-//		        instead of a relative one.
-//		Priority: Delivery priority of the message. Use the *Priority constants
-//	         specified above.
-//		Badge: An integer representing the unread notification count. This
-//		       currently only affects iOS. Specify 0 to clear the badge count.
-//		ChannelID: ID of the Notification Channel through which to display this
-//	        notification on Android devices.
+// https://github.com/expo/expo/blob/f14ebb06b858e893ed569fd29b60be6146057c10/docs/pages/push-notifications/sending-notifications.mdx#message-request-format
 type PushMessage struct {
-	To         []string          `json:"to"`
-	Body       string            `json:"body"`
-	Data       map[string]string `json:"data,omitempty"`
-	Sound      string            `json:"sound,omitempty"`
-	Title      string            `json:"title,omitempty"`
-	TTLSeconds int               `json:"ttl,omitempty"`
-	Expiration int64             `json:"expiration,omitempty"`
-	Priority   string            `json:"priority,omitempty"`
-	Badge      int               `json:"badge,omitempty"`
-	ChannelID  string            `json:"channelId,omitempty"`
+	To             []string          `json:"to"`                       // An Expo push token or an array of Expo push tokens specifying the recipient(s) of this message.
+	Body           string            `json:"body"`                     // The message to display in the notification.
+	Data           map[string]string `json:"data,omitempty"`           // A JSON object delivered to your app.
+	Sound          string            `json:"sound,omitempty"`          // Play a sound when the recipient receives this notification.
+	Title          string            `json:"title,omitempty"`          // The title to display in the notification.
+	TTLSeconds     int               `json:"ttl,omitempty"`            // Time to Live: the number of seconds for which the message may be kept around for redelivery if it hasn't been delivered yet.
+	Expiration     int64             `json:"expiration,omitempty"`     // Timestamp since the Unix epoch specifying when the message expires.
+	Priority       string            `json:"priority,omitempty"`       // The delivery priority of the message.
+	Badge          int               `json:"badge,omitempty"`          // Number to display in the badge on the app icon.
+	ChannelID      string            `json:"channelId,omitempty"`      // ID of the Notification Channel through which to display this notification.
+	CategoryID     string            `json:"categoryId,omitempty"`     // ID of the notification category that this notification is associated with.
+	MutableContent bool              `json:"mutableContent,omitempty"` // Specifies whether this notification can be intercepted by the client app.
 }
 
 // Response is the HTTP response returned from an Expo publish HTTP request

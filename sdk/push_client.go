@@ -157,7 +157,7 @@ func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, er
 	for _, msg := range messages {
 		for _, to := range msg.To {
 			r.Data[i].PushMessage = msg
-			r.Data[i].PushMessage.To = []ExponentPushToken{to}
+			r.Data[i].PushMessage.To = []string{to}
 			i += 1
 		}
 	}
