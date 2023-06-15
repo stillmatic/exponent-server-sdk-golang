@@ -22,10 +22,9 @@ var DefaultHTTPClient = &http.Client{}
 
 // PushClient is an object used for making push notification requests
 type PushClient struct {
-	host        string
-	apiURL      string
-	accessToken string
-	httpClient  *http.Client
+	accessToken  string
+	pushEndpoint string
+	httpClient   *http.Client
 }
 
 // ClientConfig specifies params that can optionally be specified for alternate
@@ -38,28 +37,34 @@ type ClientConfig struct {
 }
 
 // NewPushClient creates a new Exponent push client
-// See full API docs at https://docs.expo.dev/push-notifications/sending-notifications/
+// See full API docs at https://docs.getexponent.com/versions/v13.0.0/guides/push-notifications.html#http-2-api
 func NewPushClient(config *ClientConfig) *PushClient {
-	c := &PushClient{
-		host:        DefaultHost,
-		apiURL:      DefaultBaseAPIURL,
-		httpClient:  DefaultHTTPClient,
-		accessToken: "",
-	}
+	c := &PushClient{}
+	host := DefaultHost
+	apiURL := DefaultBaseAPIURL
+	httpClient := DefaultHTTPClient
+	accessToken := ""
 	if config != nil {
 		if config.Host != "" {
-			c.host = config.Host
+			host = config.Host
 		}
 		if config.APIURL != "" {
-			c.apiURL = config.APIURL
+			apiURL = config.APIURL
 		}
 		if config.AccessToken != "" {
-			c.accessToken = config.AccessToken
+			accessToken = config.AccessToken
 		}
 		if config.HTTPClient != nil {
-			c.httpClient = config.HTTPClient
+			httpClient = config.HTTPClient
 		}
 	}
+	c.httpClient = httpClient
+	c.accessToken = accessToken
+	sb := &strings.Builder{}
+	sb.WriteString(host)
+	sb.WriteString(apiURL)
+	sb.WriteString("/push/send")
+	c.pushEndpoint = sb.String()
 	return c
 }
 
@@ -103,14 +108,13 @@ func (c *PushClient) validate(messages []PushMessage) (int, error) {
 }
 
 func (c *PushClient) buildRequest(ctx context.Context, messages []PushMessage) (*http.Request, error) {
-	url := fmt.Sprintf("%s%s/push/send", c.host, c.apiURL)
 	jsonBytes, err := json.Marshal(messages)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create request w/ body
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.pushEndpoint, bytes.NewReader(jsonBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +133,7 @@ func (c *PushClient) publishInternal(ctx context.Context, messages []PushMessage
 	if err != nil {
 		return nil, err
 	}
+	// Build request
 	req, err := c.buildRequest(ctx, messages)
 	if err != nil {
 		return nil, err
