@@ -1,6 +1,7 @@
 package expo
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -8,7 +9,7 @@ func TestValidateResponseErrorStatus(t *testing.T) {
 	response := &PushResponse{
 		Status:  "error",
 		Message: "failed",
-		Details: map[string]interface{}{},
+		Details: map[string]json.RawMessage{},
 	}
 	err := response.ValidateResponse()
 	typed, ok := err.(*PushResponseError)
@@ -34,7 +35,7 @@ func TestValidateResponseDeviceNotRegistered(t *testing.T) {
 	response := &PushResponse{
 		Status:  "error",
 		Message: "Not registered",
-		Details: map[string]interface{}{"error": "DeviceNotRegistered"},
+		Details: map[string]json.RawMessage{"error": []byte("DeviceNotRegistered")},
 	}
 	err := response.ValidateResponse()
 	typed, ok := err.(*DeviceNotRegisteredError)
@@ -50,7 +51,7 @@ func TestValidateResponseErrorMessageTooBig(t *testing.T) {
 	response := &PushResponse{
 		Status:  "error",
 		Message: "Message too big",
-		Details: map[string]interface{}{"error": "MessageTooBig"},
+		Details: map[string]json.RawMessage{"error": []byte("MessageTooBig")},
 	}
 	err := response.ValidateResponse()
 	typed, ok := err.(*MessageTooBigError)
@@ -66,7 +67,7 @@ func TestValidateResponseErrorMessageRateExceeded(t *testing.T) {
 	response := &PushResponse{
 		Status:  "error",
 		Message: "Too many messages at once",
-		Details: map[string]interface{}{"error": "MessageRateExceeded"},
+		Details: map[string]json.RawMessage{"error": []byte("MessageRateExceeded")},
 	}
 	err := response.ValidateResponse()
 	typed, ok := err.(*MessageRateExceededError)

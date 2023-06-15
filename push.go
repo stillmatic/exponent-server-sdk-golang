@@ -1,6 +1,7 @@
 package expo
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -61,6 +62,15 @@ const ErrorMessageTooBig = "MessageTooBig"
 // ErrorMessageRateExceeded indicates messages have been sent too frequently
 const ErrorMessageRateExceeded = "MessageRateExceeded"
 
+// MismatchSenderId indicates that there is an issue with your FCM push credentials
+const MismatchSenderId = "MismatchSenderId"
+
+// Invalid credentials indicates your push notification credentials for your standalone app are invalid
+const InvalidCredentials = "InvalidCredentials"
+
+// ErrorProviderError indicates the provider (FCM or APNs) respond error
+const ErrorProviderError = "ProviderError"
+
 // PushResponse is a wrapper class for a push notification response.
 // A successful single push notification:
 //
@@ -72,10 +82,10 @@ const ErrorMessageRateExceeded = "MessageRateExceeded"
 //	 'message': '"adsf" is not a registered push notification recipient'}
 type PushResponse struct {
 	PushMessage PushMessage
-	ID          string                 `json:"id"`
-	Status      string                 `json:"status"`
-	Message     string                 `json:"message"`
-	Details     map[string]interface{} `json:"details"`
+	ID          string                     `json:"id"`
+	Status      string                     `json:"status"`
+	Message     string                     `json:"message"`
+	Details     map[string]json.RawMessage `json:"details"`
 }
 
 func (r *PushResponse) isSuccess() bool {
@@ -94,7 +104,7 @@ func (r *PushResponse) ValidateResponse() error {
 	}
 	// Handle specific errors if we have information
 	if r.Details != nil {
-		e := r.Details["error"]
+		e := string(r.Details["error"])
 		if e == ErrorDeviceNotRegistered {
 			return &DeviceNotRegisteredError{
 				PushResponseError: *err,
@@ -107,9 +117,35 @@ func (r *PushResponse) ValidateResponse() error {
 			return &MessageRateExceededError{
 				PushResponseError: *err,
 			}
+		} else if e == ErrorProviderError {
+			return &ProviderError{
+				PushResponseError: *err,
+			}
+		} else if e == MismatchSenderId {
+			return &MismatchSenderIdError{
+				PushResponseError: *err,
+			}
+		} else if e == InvalidCredentials {
+			return &InvalidCredentialsError{
+				PushResponseError: *err,
+			}
 		}
 	}
 	return err
+}
+
+// ProviderError is raised when the provider (FCM or APNs) respond error
+// On Android, error message is json string. for example: {"fcm":{"error":"MismatchSenderId"}}
+type ProviderError struct {
+	PushResponseError
+}
+
+type MismatchSenderIdError struct {
+	PushResponseError
+}
+
+type InvalidCredentialsError struct {
+	PushResponseError
 }
 
 // PushResponseError is a base class for all push reponse errors
