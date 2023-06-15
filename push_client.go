@@ -2,6 +2,7 @@ package expo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -69,8 +70,8 @@ func NewPushClient(config *ClientConfig) *PushClient {
 // @param push_message: A PushMessage object
 // @return an array of PushResponse objects which contains the results (one per each recipient).
 // @return error if any requests failed
-func (c *PushClient) Publish(message *PushMessage) ([]PushResponse, error) {
-	responses, err := c.PublishMultiple([]PushMessage{*message})
+func (c *PushClient) Publish(ctx context.Context, message *PushMessage) ([]PushResponse, error) {
+	responses, err := c.PublishMultiple(ctx, []PushMessage{*message})
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +82,8 @@ func (c *PushClient) Publish(message *PushMessage) ([]PushResponse, error) {
 // @param push_messages: An array of PushMessage objects.
 // @return an array of PushResponse objects which contains the results.
 // @return error if the request failed
-func (c *PushClient) PublishMultiple(messages []PushMessage) ([]PushResponse, error) {
-	return c.publishInternal(messages)
+func (c *PushClient) PublishMultiple(ctx context.Context, messages []PushMessage) ([]PushResponse, error) {
+	return c.publishInternal(ctx, messages)
 }
 
 // validate checks that the messages are valid
@@ -104,7 +105,7 @@ func (c *PushClient) validate(messages []PushMessage) (int, error) {
 	return count, nil
 }
 
-func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, error) {
+func (c *PushClient) publishInternal(ctx context.Context, messages []PushMessage) ([]PushResponse, error) {
 	// Validate the messages
 	expectedReceipts, err := c.validate(messages)
 	if err != nil {
@@ -117,7 +118,7 @@ func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, er
 	}
 
 	// Create request w/ body
-	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(jsonBytes))
 	if err != nil {
 		return nil, err
 	}
