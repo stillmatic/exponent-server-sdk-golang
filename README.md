@@ -3,7 +3,7 @@ Send push notifications to Expo apps using Go
 
 ## Installation
 ```
-go get github.com/oliveroneill/exponent-server-sdk-golang/sdk
+go get github.com/stillmatic/exponent-server-sdk-golang
 ```
 
 ## Usage
@@ -12,7 +12,7 @@ package main
 
 import (
     "fmt"
-    expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
+    expo "github.com/stillmatic/exponent-server-sdk-golang
 )
 
 func main() {
