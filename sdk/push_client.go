@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -84,22 +85,30 @@ func (c *PushClient) PublishMultiple(messages []PushMessage) ([]PushResponse, er
 	return c.publishInternal(messages)
 }
 
-func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, error) {
-	// Used for sanity check
-	var expectedReceipts int = 0
-
+// validate checks that the messages are valid
+// valid messages have at least one recipient and all recipients have a valid push token
+func (c *PushClient) validate(messages []PushMessage) (int, error) {
+	var count int
 	// Validate the messages
 	for _, message := range messages {
 		if len(message.To) == 0 {
-			return nil, errors.New("No recipients")
+			return 0, errors.New("No recipients")
 		}
 		for _, recipient := range message.To {
-			if recipient == "" {
-				return nil, errors.New("Invalid push token")
+			if !strings.HasPrefix(recipient, "ExponentPushToken") {
+				return 0, errors.New("Invalid push token")
 			}
 		}
-		// There will be as many receipts as there is total recipients for each message
-		expectedReceipts += len(message.To)
+		count += len(message.To)
+	}
+	return count, nil
+}
+
+func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, error) {
+	// Validate the messages
+	expectedReceipts, err := c.validate(messages)
+	if err != nil {
+		return nil, err
 	}
 	url := fmt.Sprintf("%s%s/push/send", c.host, c.apiURL)
 	jsonBytes, err := json.Marshal(messages)
