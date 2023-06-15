@@ -38,31 +38,28 @@ type ClientConfig struct {
 }
 
 // NewPushClient creates a new Exponent push client
-// See full API docs at https://docs.getexponent.com/versions/v13.0.0/guides/push-notifications.html#http-2-api
+// See full API docs at https://docs.expo.dev/push-notifications/sending-notifications/
 func NewPushClient(config *ClientConfig) *PushClient {
-	c := new(PushClient)
-	host := DefaultHost
-	apiURL := DefaultBaseAPIURL
-	httpClient := DefaultHTTPClient
-	accessToken := ""
+	c := &PushClient{
+		host:        DefaultHost,
+		apiURL:      DefaultBaseAPIURL,
+		httpClient:  DefaultHTTPClient,
+		accessToken: "",
+	}
 	if config != nil {
 		if config.Host != "" {
-			host = config.Host
+			c.host = config.Host
 		}
 		if config.APIURL != "" {
-			apiURL = config.APIURL
+			c.apiURL = config.APIURL
 		}
 		if config.AccessToken != "" {
-			accessToken = config.AccessToken
+			c.accessToken = config.AccessToken
 		}
 		if config.HTTPClient != nil {
-			httpClient = config.HTTPClient
+			c.httpClient = config.HTTPClient
 		}
 	}
-	c.host = host
-	c.apiURL = apiURL
-	c.httpClient = httpClient
-	c.accessToken = accessToken
 	return c
 }
 
@@ -105,12 +102,7 @@ func (c *PushClient) validate(messages []PushMessage) (int, error) {
 	return count, nil
 }
 
-func (c *PushClient) publishInternal(ctx context.Context, messages []PushMessage) ([]PushResponse, error) {
-	// Validate the messages
-	expectedReceipts, err := c.validate(messages)
-	if err != nil {
-		return nil, err
-	}
+func (c *PushClient) buildRequest(ctx context.Context, messages []PushMessage) (*http.Request, error) {
 	url := fmt.Sprintf("%s%s/push/send", c.host, c.apiURL)
 	jsonBytes, err := json.Marshal(messages)
 	if err != nil {
@@ -127,6 +119,19 @@ func (c *PushClient) publishInternal(ctx context.Context, messages []PushMessage
 	req.Header.Add("Content-Type", "application/json")
 	if c.accessToken != "" {
 		req.Header.Add("Authorization", "Bearer "+c.accessToken)
+	}
+	return req, nil
+}
+
+func (c *PushClient) publishInternal(ctx context.Context, messages []PushMessage) ([]PushResponse, error) {
+	// Validate the messages
+	expectedReceipts, err := c.validate(messages)
+	if err != nil {
+		return nil, err
+	}
+	req, err := c.buildRequest(ctx, messages)
+	if err != nil {
+		return nil, err
 	}
 
 	// Send request
